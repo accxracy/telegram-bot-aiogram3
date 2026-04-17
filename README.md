@@ -214,6 +214,27 @@ DB_PASSWORD=postgres
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
+## Демонстрация работы
+
+### Главное меню
+<img src="images/main_menu.png" width="350">
+
+### Карточка задачи
+<img src="images/task_generated.png" width="350">
+
+### AI-объяснение задачи
+<img src="images/ai_explained.png" width="350">
+
+### Профиль пользователя
+<img src="images/profile.jpg" width="350">
+
+### Мониторинг в Grafana
+<img src="images/grafana_metrics.jpg" width="900">
+
+
+
 
 ## Итог
 В результате был разработан Telegram-бот, объединяющий учебные материалы, тренировочные задачи, AI-помощник и систему мониторинга. Проект решает прикладную задачу помощи в подготовке по математике и физике и демонстрирует использование современных инструментов backend-разработки, работы с базой данных, контейнеризации и наблюдаемости сервиса.
+
+
