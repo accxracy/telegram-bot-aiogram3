@@ -41,7 +41,7 @@ HELP_TEXT = """
 
 def get_main_menu() -> InlineKeyboardMarkup:
  kb = [
-  [InlineKeyboardButton(text="📝 Задачи", callback_data="menu_tasks")],
+  [InlineKeyboardButton(text="📝 Задачи(источник: sdamgia)", callback_data="menu_tasks")],
   [InlineKeyboardButton(text="📐 Математика", callback_data="menu_mathematics")],
   [InlineKeyboardButton(text="🧑‍🔬 Физика", callback_data="menu_physics")],
   [InlineKeyboardButton(text="🤖 Нейросеть", callback_data="menu_neuro")],
