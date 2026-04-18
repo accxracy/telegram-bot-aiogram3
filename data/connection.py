@@ -18,11 +18,13 @@ async def get_connection():
 async def init_db():
     conn = await get_connection()
     try:
-        with open("init.sql", "r", encoding="utf-8") as file:
+        with open("01_init.sql", "r", encoding="utf-8") as file:
+            sql_script = file.read()
+        with open("02_seed.sql", "r", encoding="utf-8") as file:
             sql_script = file.read()
 
         await conn.execute(sql_script)
-        logging.info("✅ База данных успешно инициализирована из init.sql")
+        logging.info("✅ База данных успешно инициализирована из 01_init.sql")
 
     except Exception as e:
         logging.error(f"❌ Ошибка при создании таблиц: {e}")
