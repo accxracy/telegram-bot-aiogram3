@@ -201,14 +201,14 @@ async def process_topic_action(callback: CallbackQuery, callback_data: TopicActi
                 reply_markup=get_action_menu_mathematics(current_topic)
             )
 
-        elif action == "theorems":
+        elif action == "th":
             theorems = MATH_TOPICS[current_topic]['theorems']
             await callback.message.edit_text(
                 theorems,
                 reply_markup=get_action_menu_mathematics(current_topic)
             )
 
-        elif action == "formulas_mathematics":
+        elif action == "f_m":
             formulas = MATH_TOPICS[current_topic]['formulas']
             await callback.message.edit_text(
                 formulas,

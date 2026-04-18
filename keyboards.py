@@ -115,11 +115,11 @@ def get_action_menu_mathematics(topic_name) -> InlineKeyboardMarkup:
 
     builder.button(
         text="📚 Теоремы",
-        callback_data=TopicAction(topic=topic_name, action="theorems").pack()
+        callback_data=TopicAction(topic=topic_name, action="th").pack()
     )
     builder.button(
         text="🧮 Формулы",
-        callback_data=TopicAction(topic=topic_name, action="formulas_mathematics").pack()
+        callback_data=TopicAction(topic=topic_name, action="f_m").pack()
     )
 
 
