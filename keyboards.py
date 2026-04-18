@@ -45,8 +45,10 @@ def get_main_menu() -> InlineKeyboardMarkup:
   [InlineKeyboardButton(text="📐 Математика", callback_data="menu_mathematics")],
   [InlineKeyboardButton(text="🧑‍🔬 Физика", callback_data="menu_physics")],
   [InlineKeyboardButton(text="🤖 Нейросеть", callback_data="menu_neuro")],
+  [InlineKeyboardButton(text="📸Решить по фото", callback_data="photo_solve")],
   [InlineKeyboardButton(text="👤Профиль", callback_data="menu_profile")],
   [InlineKeyboardButton(text="📚 Полезные материалы", callback_data="menu_useful_materials")],
+
   [InlineKeyboardButton(text="💡 О боте", callback_data="menu_help")],
 
  ]

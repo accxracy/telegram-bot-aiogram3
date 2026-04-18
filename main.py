@@ -20,6 +20,7 @@ from data.materials import MATERIALS
 from data.connection import init_db, save_neuro_history, get_user_neuro_history, delete_user_neuro_history,  get_recent_context,     \
 check_user_limit, save_user_usage, update_user_task_stat, get_user_stats, user_solved_task
 from data.task_manage import get_random_task_from_db, get_task_by_id
+from io import BytesIO
 
 from keyboards import get_main_menu, get_help_menu, HELP_TEXT, TopicAction, get_topics_menu_physics, \
     get_action_menu_physics, \
@@ -32,6 +33,10 @@ class NeuroState(StatesGroup):
 
 class FeedBack(StatesGroup):
     waiting_for_feedback = State()
+
+class Solve_By_Photo(StatesGroup):
+    wait_photo = State()
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -532,6 +537,48 @@ async def mats(callback: CallbackQuery):
         disable_web_page_preview=True,
         reply_markup=get_back_to_materials()
     )
+
+@dp.callback_query(F.data == "photo_solve")
+async def ask_for_photo(callback: CallbackQuery, state: FSMContext):
+    REQUESTS_TOTAL.labels(type='callback').inc()
+    await callback.message.edit_text(
+    "📸 Отправь мне фотографию задачи.\n\n",
+    parse_mode="HTML",
+    reply_markup=get_help_menu()
+    )
+    await state.set_state(Solve_By_Photo.wait_photo)
+
+
+@dp.message(Solve_By_Photo.wait_photo, F.photo)
+async def process_photo_task(message: Message, state: FSMContext, bot):
+    REQUESTS_TOTAL.labels(type='photo').inc()
+    loading_msg = await message.answer("🧠 Анализирую картинку... Это может занять пару секунд. (/cancel для отмены)")
+    photo = message.photo[-1]
+    file = await bot.get_file(photo.file_id)
+    downloaded_file = BytesIO()
+    await bot.download_file(file.file_path, downloaded_file)
+    image_bytes = downloaded_file.getvalue()
+
+    try:
+        with GEMINI_LATENCY.time():
+            ai_client = Neuro()
+            answer = await ai_client.solve_from_photo(image_bytes)
+            await loading_msg.edit_text(answer, parse_mode="Markdown", reply_markup=get_help_menu())
+            try:
+                await loading_msg.edit_text(answer, parse_mode="Markdown", reply_markup=get_help_menu())
+            except TelegramBadRequest:
+                await loading_msg.edit_text(answer, parse_mode=None, reply_markup=get_help_menu())
+            GEMINI_REQUESTS.labels(status='success').inc()
+    except Exception as ex:
+        await loading_msg.edit_text(f"❌ Не смог распознать задачу. Ошибка: {str(ex)}", reply_markup=get_help_menu())
+        GEMINI_REQUESTS.labels(status='error').inc()
+    finally:
+        await state.clear()
+
+@dp.message(Solve_By_Photo.wait_photo, F.text)
+async def wrong_format_in_photo_state(message: Message, state: FSMContext):
+  await message.answer("📸 Я жду именно фотографию задачи! \nЕсли передумал, нажми /cancel")
+
 
 async def main():
     start_metrics_server(port=8000)
