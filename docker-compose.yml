@@ -24,6 +24,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_HOST=db
       - DB_PORT=5432
+      - ADMIN_ID=${ADMIN_ID}
     depends_on:
       - db
     restart: unless-stopped
