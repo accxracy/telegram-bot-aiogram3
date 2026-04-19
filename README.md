@@ -7,14 +7,6 @@
 
 ---
 
-## Цель проекта
-Цель проекта — создать Telegram-бота, который:
-- предоставляет структурированные материалы по математике и физике;
-- позволяет тренироваться на задачах из базы данных;
-- сохраняет статистику пользователя и отслеживает прогресс;
-- использует мультимодальный AI для распознавания задач по фото, объяснения решений и ведения учебного диалога;
-- поддерживает мониторинг и базовую наблюдаемость работы сервиса (DevOps/SRE практики).
-
 ---
 
 ## Реализованный функционал
@@ -129,11 +121,12 @@
 ├── prometheus.yml
 └── data/
   ├── connection.py
+  ├── Dockerfile
+  ├── materials.py
+  ├── math_topics.py
   ├── neuro.py
   ├── task_manage.py
-  ├── materials.py
-  ├── topics.py
-  └── math_topics.py
+  └── topics.py
 ```
 
 ### Назначение основных файлов
@@ -208,7 +201,7 @@ GEMINI_API_KEY=your_gemini_api_key
 <img src="images/ai_explained.png" width="350">
 
 ### Профиль пользователя
-<img src="images/profile.jpg" width="350">
+<img src="images/profile.png" width="350">
 
 ### Мониторинг в Grafana
 <img src="images/grafana_metrics.jpg" width="900">

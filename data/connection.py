@@ -160,3 +160,54 @@ async def user_solved_task(telegram_id, task_id):
     finally:
         await conn.close()
 
+
+async def get_user_task_num_stats(telegram_id):
+    conn = await get_connection()
+    try:
+        user_record = await conn.fetchrow("SELECT id FROM users WHERE telegram_id = $1", telegram_id)
+
+        if not user_record:
+            return []
+
+        user_id = user_record['id']
+
+        total_records = await conn.fetch("""
+      SELECT subject, task_num, COUNT(id) as total_count 
+      FROM ege_tasks 
+      GROUP BY subject, task_num;
+    """)
+
+        total_dict = {(row['subject'], row['task_num']): row['total_count'] for row in total_records}
+
+        solved_records = await conn.fetch("""
+   SELECT ege_tasks.subject, ege_tasks.task_num, COUNT(user_solved_tasks.task_id) as solved_count
+   FROM user_solved_tasks
+   INNER JOIN ege_tasks ON user_solved_tasks.task_id = ege_tasks.id
+   WHERE user_solved_tasks.user_id = $1
+   GROUP BY ege_tasks.subject, ege_tasks.task_num
+   ORDER BY ege_tasks.subject, ege_tasks.task_num;
+  """, user_id)
+
+        result = []
+        for row in solved_records:
+            subj = row['subject']
+            t_num = row['task_num']
+            s_count = row['solved_count']
+
+            t_total = total_dict.get((subj, t_num), 0)
+
+            result.append({
+                'subject': subj,
+                'task_num': t_num,
+                'solved_count': s_count,
+                'total_in_num': t_total
+            })
+
+        return result
+
+    except Exception as ex:
+        logging.error(f"Ошибка: {ex}")
+        return []
+    finally:
+        await conn.close()
+

@@ -18,7 +18,7 @@ from data.math_topics import MATH_TOPICS
 from data.topics import TOPICS
 from data.materials import MATERIALS
 from data.connection import init_db, save_neuro_history, get_user_neuro_history, delete_user_neuro_history,  get_recent_context,     \
-check_user_limit, save_user_usage, update_user_task_stat, get_user_stats, user_solved_task
+check_user_limit, save_user_usage, update_user_task_stat, get_user_stats, user_solved_task, get_user_task_num_stats
 from data.task_manage import get_random_task_from_db, get_task_by_id
 from io import BytesIO
 
@@ -38,7 +38,6 @@ class Solve_By_Photo(StatesGroup):
     wait_photo = State()
 
 
-
 logging.basicConfig(level=logging.INFO)
 
 bot_token = BOT_TOKEN
@@ -50,6 +49,16 @@ if not bot_token:
 bot = Bot(token=bot_token,
     default = DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
+
+
+def generate_progress_bar(solved, total):
+    if total == 0:
+        return "⬜️" * 10 + " 0%"
+    percent = (solved / total) * 100
+    filled = int((percent / 100) * 10)
+    empty = 10 - filled
+
+    return "🟩" * filled + "⬜️" * empty + f" {int(percent)}%"
 
 
 def md_to_telegram_html(text: str) -> str:
@@ -439,6 +448,8 @@ async def show_profile(callback: CallbackQuery):
     name = f"@{user.username}" if user.username else user.full_name
 
     stats = await get_user_stats(user.id)
+    task_num_stats = await get_user_task_num_stats(user.id)
+
     solved = stats['solved']
     unsolved = stats['unsolved']
 
@@ -452,8 +463,30 @@ async def show_profile(callback: CallbackQuery):
         f"📊 <b>Статистика тренажёра:</b>\n"
         f"✅ Решено верно: <b>{solved}</b>\n"
         f"❌ Ошибок: <b>{unsolved}</b>\n"
-        f"🎯 Процент успеха: <b>{winrate}%</b>"
+        f"🎯 Процент успеха: <b>{winrate}%</b>\n"
     )
+    profile_text += f"\n📈 <b>Прогресс по номерам ЕГЭ:</b>\n"
+    if not task_num_stats:
+        profile_text += "<i>Пока нет решенных задач...</i>"
+    else:
+        for row in task_num_stats:
+            task_num = row['task_num']
+            subj_raw = row['subject']
+            t_solved = row['solved_count']
+            t_total = row['total_in_num']
+
+
+            translator = {
+                'math': 'Математика',
+                'physics': 'Физика'
+            }
+
+            subj_ru = translator.get(subj_raw, subj_raw)
+
+            bar = generate_progress_bar(t_solved, t_total)
+            cup = " 🏆" if t_total > 0 and t_solved == t_total else ""
+
+            profile_text += f"🔹 Задание №{task_num} ({subj_ru}):\n{bar}{cup}\n\n"
 
     await callback.message.edit_text(
         profile_text,
@@ -577,7 +610,8 @@ async def process_photo_task(message: Message, state: FSMContext, bot):
 
 @dp.message(Solve_By_Photo.wait_photo, F.text)
 async def wrong_format_in_photo_state(message: Message, state: FSMContext):
-  await message.answer("📸 Я жду именно фотографию задачи! \nЕсли передумал, нажми /cancel")
+    REQUESTS_TOTAL.labels(type='callback').inc()
+    await message.answer("📸 Я жду именно фотографию задачи! \nЕсли передумал, нажми /cancel")
 
 
 async def main():
