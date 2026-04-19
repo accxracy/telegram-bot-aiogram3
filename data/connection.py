@@ -134,10 +134,10 @@ async def get_user_stats(telegram_id):
     conn = await get_connection()
     try:
         user = await conn.fetchrow("""
-   SELECT solved, unsolved 
-   FROM users 
-   WHERE telegram_id = $1
-  """, telegram_id)
+        SELECT solved, unsolved 
+        FROM users 
+        WHERE telegram_id = $1
+        """, telegram_id)
 
         if user:
             return dict(user)
@@ -211,3 +211,7 @@ async def get_user_task_num_stats(telegram_id):
     finally:
         await conn.close()
 
+async def get_top_users():
+    conn = await get_connection()
+    rows = await conn.fetch("SELECT username, solved FROM users ORDER BY solved DESC LIMIT 10")
+    return rows

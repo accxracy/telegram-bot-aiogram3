@@ -10,6 +10,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
+
+
 from metrics import start_metrics_server, REQUESTS_TOTAL, GEMINI_REQUESTS, GEMINI_LATENCY
 from config import BOT_TOKEN, ADMIN_ID
 
@@ -18,7 +20,7 @@ from data.math_topics import MATH_TOPICS
 from data.topics import TOPICS
 from data.materials import MATERIALS
 from data.connection import init_db, save_neuro_history, get_user_neuro_history, delete_user_neuro_history,  get_recent_context,     \
-check_user_limit, save_user_usage, update_user_task_stat, get_user_stats, user_solved_task, get_user_task_num_stats
+check_user_limit, save_user_usage, update_user_task_stat, get_user_stats, user_solved_task, get_user_task_num_stats, get_top_users
 from data.task_manage import get_random_task_from_db, get_task_by_id
 from io import BytesIO
 
@@ -68,6 +70,8 @@ def md_to_telegram_html(text: str) -> str:
     text = re.sub(r'(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)', r'<b>\1</b>', text)
     text = re.sub(r'\b_(.*?)_\b', r'<i>\1</i>', text)
     return text
+
+
 
 @dp.message(Command("history"))
 async def print_history(message: Message):
@@ -558,6 +562,7 @@ async def mats(callback: CallbackQuery):
 
     header = titles.get(category_key, "📌 Полезные материалы:")
     text = f"<b>{header}</b>\n\n"
+    text = f"<b>{header}</b>\n\n"
 
 
     for item in items:
@@ -603,7 +608,8 @@ async def process_photo_task(message: Message, state: FSMContext, bot):
                 await loading_msg.edit_text(answer, parse_mode=None, reply_markup=get_help_menu())
             GEMINI_REQUESTS.labels(status='success').inc()
     except Exception as ex:
-        await loading_msg.edit_text(f"❌ Не смог распознать задачу. Ошибка: {str(ex)}", reply_markup=get_help_menu())
+        await loading_msg.edit_text(f"❌ Не смог распознать задачу.", reply_markup=get_help_menu())
+        logging.error(ex)
         GEMINI_REQUESTS.labels(status='error').inc()
     finally:
         await state.clear()
@@ -612,6 +618,31 @@ async def process_photo_task(message: Message, state: FSMContext, bot):
 async def wrong_format_in_photo_state(message: Message, state: FSMContext):
     REQUESTS_TOTAL.labels(type='callback').inc()
     await message.answer("📸 Я жду именно фотографию задачи! \nЕсли передумал, нажми /cancel")
+
+@dp.callback_query(F.data == "leader_board")
+async def top(callback: CallbackQuery):
+    users = await get_top_users()
+
+    if not users:
+        await callback.message.edit_text("Пока что никто не решал задачи. Будь первым! 🥇", reply_markup=get_help_menu())
+        return
+
+    text = "🏆 **ТОП ЛИДЕРОВ**\n"
+    text += "──────────────────\n\n"
+
+    for i, user in enumerate(users, 1):
+        medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, "🔹")
+
+        solved = f"`{user['solved']:<3}`"
+        username = user['username']
+
+        text += f"{medal} @{username:<12} | {solved} задач\n"
+
+    text += "\n──────────────────"
+
+    text += "\n🔄 *Обновляется в реальном времени*"
+
+    await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=get_help_menu())
 
 
 async def main():
