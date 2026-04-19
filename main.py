@@ -10,7 +10,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
-
+from seed import seed
 
 from metrics import start_metrics_server, REQUESTS_TOTAL, GEMINI_REQUESTS, GEMINI_LATENCY
 from config import BOT_TOKEN, ADMIN_ID
@@ -648,7 +648,9 @@ async def top(callback: CallbackQuery):
 async def main():
     start_metrics_server(port=8000)
     await init_db()
+    await seed()
     await dp.start_polling(bot)
+
 
 
 if __name__ == "__main__":

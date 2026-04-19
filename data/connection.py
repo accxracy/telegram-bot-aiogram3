@@ -20,8 +20,7 @@ async def init_db():
     try:
         with open("01_init.sql", "r", encoding="utf-8") as file:
             sql_script = file.read()
-        with open("02_seed.sql", "r", encoding="utf-8") as file:
-            sql_script = file.read()
+
 
         await conn.execute(sql_script)
         logging.info("✅ База данных успешно инициализирована из 01_init.sql")
