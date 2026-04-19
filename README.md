@@ -208,7 +208,7 @@ GEMINI_API_KEY=your_gemini_api_key
 
 ---
 🛠 Как поднять этого бота на сервере
-1. Подготовка
+1. Подготовка.
    Подключение к серверу по ssh:
 ```bash
 ssh root@<ip-адрес>
@@ -217,7 +217,7 @@ ssh root@<ip-адрес>
 ```bash
 apt update && apt install -y docker docker-compose
 ```
-2. Запуск
+2. Запуск.
 Клон репозитория:
 ```bash
 git clone <ссылка>
