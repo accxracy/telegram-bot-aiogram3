@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -19,15 +20,17 @@ from data.neuro import Neuro
 from data.math_topics import MATH_TOPICS
 from data.topics import TOPICS
 from data.materials import MATERIALS
-from data.connection import init_db, save_neuro_history, get_user_neuro_history, delete_user_neuro_history,  get_recent_context,     \
-check_user_limit, save_user_usage, update_user_task_stat, get_user_stats, user_solved_task, get_user_task_num_stats, get_top_users
-from data.task_manage import get_random_task_from_db, get_task_by_id
+from data.connection import init_db, save_neuro_history, get_user_neuro_history, delete_user_neuro_history, \
+    get_recent_context, \
+    check_user_limit, save_user_usage, update_user_task_stat, get_user_stats, user_solved_task, get_user_task_num_stats, \
+    get_top_users, init_pool, close_pool, save_model, get_model
+from data.task_manage import get_random_task_from_db, get_task_by_id, get_or_create_ai_solution
 from io import BytesIO
 
 from keyboards import get_main_menu, get_help_menu, HELP_TEXT, TopicAction, get_topics_menu_physics, \
     get_action_menu_physics, \
     get_topics_menu_mathematics, get_action_menu_mathematics, get_neuro_chat_menu, get_random_task, task_generator, \
-    get_list_materials, get_back_to_materials
+    get_list_materials, get_back_to_materials, keyboard_models
 
 
 class NeuroState(StatesGroup):
@@ -274,9 +277,9 @@ async def process_topic_action(callback: CallbackQuery, callback_data: TopicActi
 async def process_neuro(callback: CallbackQuery, state: FSMContext):
     REQUESTS_TOTAL.labels(type='callback').inc()
     await state.clear()
-
+    model = await get_model(callback.from_user.id)
     await callback.message.edit_text(
-        "🤖 Нейро-мод. Модель: gemini-2.5-flash",
+        f"🤖 Нейро-мод. Модель: {model}",
         reply_markup=get_help_menu()
     )
     await state.set_state(NeuroState.waiting_for_prompt)
@@ -308,6 +311,7 @@ def build_context_prompt(history_rows, current_prompt: str):
 
 @dp.message(NeuroState.waiting_for_prompt, F.text)
 async def neuro_prompt(message: Message, state: FSMContext):
+    model = await get_model(message.from_user.id)
     wait_msg = await message.answer("🧠 Думаю...", reply_markup=get_neuro_chat_menu())
 
     has_limit = await check_user_limit(message.from_user.id, limit=20)
@@ -322,7 +326,7 @@ async def neuro_prompt(message: Message, state: FSMContext):
         history_rows = await get_recent_context(message.from_user.id, limit=3)
         final_prompt = build_context_prompt(history_rows, message.text)
         with GEMINI_LATENCY.time():
-            ai = Neuro()
+            ai = Neuro(model_name=model)
 
             answer = await ai.make_response(final_prompt)
         GEMINI_REQUESTS.labels(status='success').inc()
@@ -395,8 +399,7 @@ async def ai_explain_handler(callback: CallbackQuery):
 
     try:
         with GEMINI_LATENCY.time():
-            ai = Neuro()
-            raw_answer = await ai.explain_task(task['condition'], task['solution'])
+            raw_answer = await get_or_create_ai_solution(task_id, task['condition'], task['solution'], callback.from_user.id)
             GEMINI_REQUESTS.labels(status='success').inc()
 
             safe_html_answer = md_to_telegram_html(raw_answer)
@@ -413,8 +416,8 @@ async def ai_explain_handler(callback: CallbackQuery):
                     parse_mode="HTML"
                 )
 
-            except Exception as e:
-                logging.warning(f"Сломался HTML парсер: {e}. Отправляю сырой текст.")
+            except Exception as ex:
+                logging.warning(f"Сломался HTML парсер: {ex}. Отправляю сырой текст.")
 
                 plain_text = (
                     f"📄 Условие:\n{task['condition']}\n\n"
@@ -449,6 +452,8 @@ async def show_profile(callback: CallbackQuery):
     REQUESTS_TOTAL.labels(type='callback').inc()
     user = callback.from_user
 
+    model = await get_model(callback.from_user.id)
+
     name = f"@{user.username}" if user.username else user.full_name
 
     stats = await get_user_stats(user.id)
@@ -471,7 +476,7 @@ async def show_profile(callback: CallbackQuery):
     )
     profile_text += f"\n📈 <b>Прогресс по номерам ЕГЭ:</b>\n"
     if not task_num_stats:
-        profile_text += "<i>Пока нет решенных задач...</i>"
+        profile_text += "<i>Пока нет решенных задач...</i>\n\n"
     else:
         for row in task_num_stats:
             task_num = row['task_num']
@@ -491,6 +496,8 @@ async def show_profile(callback: CallbackQuery):
             cup = " 🏆" if t_total > 0 and t_solved == t_total else ""
 
             profile_text += f"🔹 Задание №{task_num} ({subj_ru}):\n{bar}{cup}\n\n"
+
+    profile_text += f"⚙️ <b>Текущая модель:</b> <code>{model}</code>"
 
     await callback.message.edit_text(
         profile_text,
@@ -589,6 +596,7 @@ async def ask_for_photo(callback: CallbackQuery, state: FSMContext):
 
 @dp.message(Solve_By_Photo.wait_photo, F.photo)
 async def process_photo_task(message: Message, state: FSMContext, bot):
+    model = await get_model(message.from_user.id)
     REQUESTS_TOTAL.labels(type='photo').inc()
     loading_msg = await message.answer("🧠 Анализирую картинку... Это может занять пару секунд. (/cancel для отмены)")
     photo = message.photo[-1]
@@ -599,7 +607,7 @@ async def process_photo_task(message: Message, state: FSMContext, bot):
 
     try:
         with GEMINI_LATENCY.time():
-            ai_client = Neuro()
+            ai_client = Neuro(model)
             answer = await ai_client.solve_from_photo(image_bytes)
             await loading_msg.edit_text(answer, parse_mode="Markdown", reply_markup=get_help_menu())
             try:
@@ -645,13 +653,33 @@ async def top(callback: CallbackQuery):
     await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=get_help_menu())
 
 
+@dp.callback_query(F.data == "menu_choose_neuro")
+async def neuro_choose(callback: CallbackQuery):
+    await callback.message.edit_text('Выберите модель: ', reply_markup=keyboard_models())
+
+@dp.callback_query(F.data.startswith("set_model"))
+async def set_model(callback: CallbackQuery):
+    model = callback.data.split("_")[2]
+    model_name = f"gemini-{model}"
+
+    await save_model(callback.from_user.id, model_name)
+
+    await callback.message.edit_text("Модель успешно обновлена! Теперь AI будет отвечать через неё.", reply_markup=get_help_menu())
+
+
 async def main():
     start_metrics_server(port=8000)
+    await init_pool()
     await init_db()
     await seed()
-    await dp.start_polling(bot)
+    logging.info("Бот запущен")
 
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await close_pool()
+        await bot.session.close()
+        logging.info("Бот остановлен")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(main())
-

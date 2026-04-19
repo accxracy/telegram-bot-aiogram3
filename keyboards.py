@@ -49,6 +49,7 @@ def get_main_menu() -> InlineKeyboardMarkup:
     [InlineKeyboardButton(text="👤 Профиль", callback_data="menu_profile")],
     [InlineKeyboardButton(text="🏆 Лидерборд", callback_data="leader_board")],
     [InlineKeyboardButton(text="📚 Полезные материалы", callback_data="menu_useful_materials")],
+    [InlineKeyboardButton(text="🧠Выбор модели", callback_data="menu_choose_neuro")],
 
     [InlineKeyboardButton(text="💡 О боте", callback_data="menu_help")],
 
@@ -177,4 +178,14 @@ def get_back_to_materials() -> InlineKeyboardMarkup:
     builder.button(text="🔙 Назад", callback_data="menu_useful_materials")
 
     builder.adjust(1)
+    return builder.as_markup()
+
+def keyboard_models() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="⚡️gemini-2.5-flash-lite", callback_data="set_model_2.5-flash-lite")
+    builder.button(text="🍃 gemini-2.5-flash", callback_data="set_model_2.5-flash")
+    builder.button(text="🧠 gemini-3-flash-preview", callback_data="set_model_3-flash-preview")
+    builder.button(text="🔙 Назад", callback_data="menu_back_to_main")
+
+    builder.adjust(2, 1, 1)
     return builder.as_markup()

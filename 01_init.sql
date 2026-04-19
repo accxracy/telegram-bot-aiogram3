@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS ege_tasks (
   condition TEXT NOT NULL,
   solution TEXT NOT NULL,
   answer VARCHAR(255) NOT NULL,
-  photo_id VARCHAR(255),
+  ai_solution TEXT,
 
   CONSTRAINT unique_task UNIQUE (subject, condition)
 );
@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS users (
   telegram_id BIGINT UNIQUE NOT NULL,
   username VARCHAR(50),
   solved INT DEFAULT 0,
-  unsolved INT DEFAULT 0
+  unsolved INT DEFAULT 0,
+  preferred_model TEXT
 );
 
 CREATE TABLE IF NOT EXISTS user_solved_tasks (
