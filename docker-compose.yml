@@ -44,5 +44,11 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
 volumes:
   postgres_data: {}

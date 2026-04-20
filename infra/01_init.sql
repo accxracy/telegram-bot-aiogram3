@@ -52,4 +52,14 @@ CREATE TABLE IF NOT EXISTS user_solved_tasks (
   PRIMARY KEY (user_id, task_id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_neuro_history_user_time
+ON neuro_history(telegram_id, created_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_neuro_usage_user_time
+ON neuro_usage(telegram_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_ege_tasks_subject
+ON ege_tasks(subject);
+
+CREATE INDEX IF NOT EXISTS idx_users_solved_desc
+ON users(solved DESC);
