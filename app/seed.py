@@ -1,14 +1,14 @@
 import json
 import os
 import logging
-import data.connection
+import app.data.connection
 
 async def seed():
     file_path = os.path.join(os.path.dirname(__file__), 'data/tasks.json')
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             tasks = json.load(f)
-        async with data.connection.pool.acquire() as conn:
+        async with app.data.connection.pool.acquire() as conn:
             async with conn.transaction():
                 for t in tasks:
                     await conn.execute("""

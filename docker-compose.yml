@@ -3,7 +3,7 @@ services:
   db:
     build:
       context: .
-      dockerfile: data/Dockerfile
+      dockerfile: app/data/Dockerfile
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
@@ -34,7 +34,8 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
+
     ports:
       - "9090:9090"
   grafana:

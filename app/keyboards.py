@@ -2,8 +2,8 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from data.math_topics import MATH_TOPICS
-from data.topics import TOPICS
+from app.data.math_topics import MATH_TOPICS
+from app.data.topics import TOPICS
 
 
 

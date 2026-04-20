@@ -1,6 +1,5 @@
-
-from data import connection
-from data.neuro import Neuro
+from app.data import connection
+from app.data.neuro import Neuro
 
 
 async def get_random_task_from_db(telegram_id, subject):

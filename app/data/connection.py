@@ -1,7 +1,7 @@
 import asyncpg
 import logging
 
-from config import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
+from app.config import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
 
 pool = None
 
@@ -31,7 +31,7 @@ async def close_pool():
 async def init_db():
     async with pool.acquire() as conn:
         try:
-            with open("01_init.sql", "r", encoding="utf-8") as file:
+            with open("infra/01_init.sql", "r", encoding="utf-8") as file:
                 sql_script = file.read()
 
 
