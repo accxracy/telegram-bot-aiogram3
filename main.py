@@ -34,7 +34,6 @@ async def main():
     throttling = RedisThrottlingMiddleware(redis=redis_client)
 
     dp.message.middleware(throttling)
-    dp.callback_query.middleware(throttling)
 
     bot.session.middleware(RetryRequestMiddleware())
 
