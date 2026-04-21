@@ -20,13 +20,13 @@ jobs:
             echo "DB_PASS=test_pass" >> .env
             echo "DB_NAME=test_db" >> .env
       - name: db redis up
-        run: docker-compose up -d db redis
+        run: docker compose up -d db redis
       - name: wait
         run: sleep 15
       - name: build bot
-        run: docker-compose build bot
+        run: docker compose build bot
       - name: test
-        run: docker-compose run --rm bot python healthcheck.py
+        run: docker compose run --rm bot python healthcheck.py
       - name: clear
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
