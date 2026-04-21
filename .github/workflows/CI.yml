@@ -1,0 +1,32 @@
+name: CI pipe
+
+on:
+  push
+
+jobs:
+  test:
+    name: build + test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: check
+        uses: actions/checkout@v4
+      - name: testenv
+        run: |
+            echo "BOT_TOKEN=12345:fake" >> .env
+            echo "NEURO_API_KEY=fake" >> .env
+            echo "ADMIN_ID=123" >> .env
+            echo "DB_USER=test_user" >> .env
+            echo "DB_PASS=test_pass" >> .env
+            echo "DB_NAME=test_db" >> .env
+      - name: db redis up
+        run: docker-compose up -d db redis
+      - name: wait
+        run: sleep 15
+      - name: build bot
+        run: docker-compose build bot
+      - name: test
+        run: docker-compose run --rm bot python healthcheck.py
+      - name: clear
+        if: always()
+        run: docker-compose down -v

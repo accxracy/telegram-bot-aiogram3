@@ -10,8 +10,8 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     restart: unless-stopped
   bot:
     build:
@@ -27,17 +27,18 @@ services:
       - ADMIN_ID=${ADMIN_ID}
     depends_on:
       - db
+      - redis
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
 
   prometheus:
     image: prom/prometheus:latest
     volumes:
       - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
 
-    ports:
-      - "9090:9090"
+    expose:
+      - "9090"
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -47,8 +48,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
 
 volumes:
   postgres_data: {}
