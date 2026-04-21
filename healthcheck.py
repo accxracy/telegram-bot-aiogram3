@@ -22,13 +22,13 @@ async def check():
 
         redis = Redis(host="redis", port=6379, socket_timeout=5)
         await redis.ping()
-        await redis.close()
+        await redis.aclose()
         print("✅Redis")
 
         sys.exit(0)
 
-    except:
-        print(f"❌ ОШИБКА")
+    except Exception as ex:
+        print(f"❌ ОШИБКА {ex}")
         sys.exit(1)
 
 if __name__ == "__main__":
