@@ -1,11 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
 from app.data.math_topics import MATH_TOPICS
 from app.data.topics import TOPICS
+from aiogram.types.web_app_info import WebAppInfo
 
-
+from app.config import URL
 
 class TopicAction(CallbackData, prefix="ta"):
   topic: str
@@ -22,6 +22,7 @@ HELP_TEXT = """
 • <b>Формулы:</b> <i>удобная шпаргалка</i>
 • <b>Теоремы:</b> <i>ключевые доказательства</i>
 • <b>Задачи:</b> <i>генератор для практики и подготовки</i>
+• <b>Тренажер (Beta):</b> <i>точно такой же генератор для практики только в более удобном формате WebApp. (часто умирает))</i>
 
 👤 <b>Профиль и AI:</b>
 • <b>Профиль:</b> <i>статистика решённых задач</i>
@@ -52,6 +53,7 @@ def get_main_menu() -> InlineKeyboardMarkup:
     [InlineKeyboardButton(text="🧠Выбор модели", callback_data="menu_choose_neuro")],
 
     [InlineKeyboardButton(text="💡 О боте", callback_data="menu_help")],
+    [InlineKeyboardButton(text=f"Тренажер BETA", web_app=WebAppInfo(url=f"{URL}"))]
 
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)

@@ -25,6 +25,7 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
       - ADMIN_ID=${ADMIN_ID}
+      - URL=${URL}
     depends_on:
       - db
       - redis
@@ -50,6 +51,26 @@ services:
     restart: always
     expose:
       - "6379"
+  webapp:
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - GEMINI_API_KEY=${NEURO_API_KEY}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - ADMIN_ID=${ADMIN_ID}
+      - URL=${URL}
+
+    depends_on:
+      - db
+    restart: unless-stopped
 
 volumes:
   postgres_data: {}

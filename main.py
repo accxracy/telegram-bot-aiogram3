@@ -14,6 +14,7 @@ from app.data.connection import init_db, init_pool, close_pool
 from app.handlers import profile, ai_client, tasks, base, theory
 from aiogram.fsm.storage.redis import RedisStorage
 
+
 logging.basicConfig(level=logging.INFO)
 
 bot_token = BOT_TOKEN

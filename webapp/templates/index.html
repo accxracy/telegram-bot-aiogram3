@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EGE Тренажер</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #ffffff);
+      --text-color: var(--tg-theme-text-color, #000000);
+      --hint-color: var(--tg-theme-hint-color, #999999);
+      --btn-color: var(--tg-theme-button-color, #3390ec);
+      --btn-text-color: var(--tg-theme-button-text-color, #ffffff);
+      --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    p.subtitle {
+      color: var(--hint-color);
+      font-size: 14px;
+      margin-top: 0;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .task-card {
+      background-color: var(--secondary-bg);
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .task-title {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: var(--btn-color);
+    }
+
+    .task-text {
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      word-wrap: break-word;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      padding: 12px 15px;
+      border: 1px solid var(--hint-color);
+      border-radius: 8px;
+      font-size: 16px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--btn-color);
+    }
+
+    button.action-btn {
+      background-color: var(--btn-color);
+      color: var(--btn-text-color);
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button.action-btn:active {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="greeting">Генерация задачи</h1>
+  <p class="subtitle">Математика и Физика</p>
+
+  <div class="task-card">
+    <div class="task-title">Задание №...</div>
+    <div class="task-text" id="task-content">
+      Нажмите кнопку ниже, чтобы получить новую задачу.
+    </div>
+
+    <div class="input-group" id="answer-section" style="display: none;">
+      <input type="text" id="user-answer" placeholder="Введите ваш ответ" autocomplete="off">
+      <button class="action-btn" id="submit-btn" onclick="checkAnswer()">Проверить ответ</button>
+    </div>
+  </div>
+
+  <button class="action-btn" id="generate-btn-math" onclick="fetchTask('math')"  style="margin-bottom: 15px;" >🎲Сгенерировать задачу (Математика)</button>
+
+  <button class="action-btn" id="generate-btn-phys" onclick="fetchTask('physics')">🎲Сгенерировать задачу (Физика)</button>
+
+  <div id="ai-section" style="display: none; margin-top: 15px;">
+  <button class="action-btn" id="ai-btn" onclick="getAIExplanation()">🧠 Объяснить с AI</button>
+  <div id="ai-explanation" style="margin-top: 10px; white-space: pre-wrap;"></div>
+</div>
+
+   <script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+
+  const user = tg.initDataUnsafe?.user;
+  if (user) {
+   document.getElementById('greeting').innerText = `Привет, ${user.first_name}!`;
+  }
+
+  tg.MainButton.setText('ЗАКРЫТЬ ТРЕНАЖЕР');
+  tg.MainButton.show();
+  tg.MainButton.onClick(() => {
+   tg.close();
+  });
+
+  async function fetchTask(subject) {
+
+   document.getElementById('generate-btn-math').style.display = 'none';
+   document.getElementById('generate-btn-phys').style.display = 'none';
+
+   document.getElementById('ai-section').style.display = 'none';
+   const userId = tg.initDataUnsafe?.user?.id || 0;
+
+   try {
+    const response = await fetch(`/api/get_task?tg_id=${userId}&subject=${subject}`);
+    const data = await response.json();
+
+    if (data.success) {
+    currentTaskId = data.task_id;
+     document.getElementById('task-content').innerHTML = data.task_text;
+
+     const subjectName = subject === 'math' ? 'Математика' : 'Физика';
+     document.querySelector('.task-title').innerText = `Задание ${data.task_number} (${subjectName})`;
+
+     document.getElementById('answer-section').style.display = 'flex';
+     document.getElementById('user-answer').value = '';
+     const resDiv = document.getElementById('result-message');
+  if(resDiv) resDiv.style.display = 'none';
+    } else {
+     tg.showAlert("Ошибка: " + (data.error || "Нет задач!"));
+
+     document.getElementById('generate-btn-math').style.display = 'block';
+     document.getElementById('generate-btn-phys').style.display = 'block';
+    }
+   } catch (error) {
+    tg.showAlert("Сервер недоступен.");
+    console.error(error);
+
+    document.getElementById('generate-btn-math').style.display = 'block';
+    document.getElementById('generate-btn-phys').style.display = 'block';
+   }
+  }
+  async function checkAnswer() {
+ const userAnswer = document.getElementById('user-answer').value;
+ let userId = 0;
+ let username = "unknown";
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+  const user = window.Telegram.WebApp.initDataUnsafe.user;
+  userId = user.id || 0;
+  username = user.username || user.first_name || "unknown";
+ }
+
+ if (!userAnswer) {
+ tg.showAlert("Введите ответ!");
+ return;
+ }
+
+ if (!currentTaskId) {
+ tg.showAlert("Сначала сгенерируйте задачу!");
+ return;
+ }
+
+ try {
+ const response = await fetch('/api/check_answer', {
+  method: 'POST',
+  headers: {
+  'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+  tg_id: userId,
+  task_id: currentTaskId,
+  user_answer: userAnswer,
+  username: username
+  })
+ });
+ const data = await response.json();
+ if (data.success) {
+  if (data.is_correct) {
+  tg.showAlert("✅ Правильно!");
+  document.getElementById('generate-btn-math').style.display = 'block';
+  document.getElementById('generate-btn-phys').style.display = 'block';
+  document.getElementById('answer-section').style.display = 'none';
+  } else {
+  tg.showAlert(`❌ Неверно!\nПравильный ответ: ${data.correct_answer}\n\nРешение:\n${data.solution}`);
+  document.getElementById('ai-section').style.display = 'block';
+  document.getElementById('ai-explanation').innerText = '';
+
+  document.getElementById('generate-btn-math').style.display = 'block';
+  document.getElementById('generate-btn-phys').style.display = 'block';
+  }
+ } else {
+  tg.showAlert("Ошибка проверки: " + data.error);
+ }
+
+ } catch (error) {
+ tg.showAlert("Ошибка соединения с сервером.");
+ }
+}
+  async function getAIExplanation() {
+ const aiDiv = document.getElementById('ai-explanation');
+ aiDiv.innerText = "🧠 Думаю...";
+
+ const user = window.Telegram.WebApp.initDataUnsafe?.user;
+ const userId = user?.id || 0;
+
+ try {
+  const response = await fetch(`/api/get_ai_explanation?tg_id=${userId}&task_id=${currentTaskId}`);
+  const data = await response.json();
+
+  if (data.success) {
+   aiDiv.innerText = data.explanation;
+  } else {
+   aiDiv.innerText = "❌ Ошибка: " + data.error;
+  }
+ } catch (e) {
+  aiDiv.innerText = "❌ Ошибка соединения.";
+ }
+}
+ </script>
+
+</body>
+</html>
