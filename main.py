@@ -45,6 +45,7 @@ async def main():
     dp.include_router(ai_client.router)
 
     start_metrics_server(port=8000)
+
     await init_pool()
     await init_db()
     await seed()

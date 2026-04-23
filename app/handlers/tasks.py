@@ -6,7 +6,7 @@ from app.data.task_manage import get_random_task_from_db, get_task_by_id, get_or
 from app.data.connection import update_user_task_stat, user_solved_task
 from app.keyboards import get_random_task, task_generator, get_help_menu
 from app.metrics import REQUESTS_TOTAL, GEMINI_REQUESTS, GEMINI_LATENCY
-from app.utils import md_to_telegram_html # Убедись, что ты создал utils.py и перенес туда эту функцию!
+from app.utils import md_to_telegram_html
 
 router = Router()
 

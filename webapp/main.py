@@ -7,7 +7,7 @@ import logging
 from app.data.task_manage import get_random_task_from_db, get_task_by_id, get_or_create_ai_solution
 from app.data import connection
 from app.metrics import DB_QUERY_TIME, TASK_GENERATED, REQUEST_ERRORS
-
+from prometheus_fastapi_instrumentator import Instrumentator
 logging.basicConfig(level=logging.INFO)
 
 
@@ -115,3 +115,6 @@ async def get_ai_explanation(tg_id: int, task_id: int):
 
 
             return {"success": True, "explanation": fallback_text}
+
+
+Instrumentator().instrument(app).expose(app)

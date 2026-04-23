@@ -38,8 +38,8 @@ services:
     volumes:
       - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
 
-    expose:
-      - "9090"
+    ports:
+      - "9090:9090"
   grafana:
     image: grafana/grafana:latest
     ports:

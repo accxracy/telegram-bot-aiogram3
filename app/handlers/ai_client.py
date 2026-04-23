@@ -11,7 +11,7 @@ from app.data.connection import (
     save_user_usage, save_model, get_model
 )
 from app.keyboards import get_main_menu, get_help_menu, get_neuro_chat_menu, keyboard_models
-from app.states import NeuroState, Solve_By_Photo # Убедись, что перенес стейты в states.py!
+from app.states import NeuroState, Solve_By_Photo
 from app.metrics import REQUESTS_TOTAL, GEMINI_REQUESTS, GEMINI_LATENCY
 from app.utils import build_context_prompt
 
