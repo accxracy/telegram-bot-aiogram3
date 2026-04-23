@@ -55,8 +55,8 @@ services:
     build:
       context: .
       dockerfile: webapp/Dockerfile
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - GEMINI_API_KEY=${NEURO_API_KEY}
@@ -71,6 +71,18 @@ services:
     depends_on:
       - db
     restart: unless-stopped
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
-  postgres_data: {}
+  postgres_data: { }
+  caddy_data: { }
+  caddy_config: { }

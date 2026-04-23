@@ -1,0 +1,3 @@
+mytelegrambotwebapp.ru {
+ reverse_proxy /super-secret-path-12345/* webapp:5000
+}
