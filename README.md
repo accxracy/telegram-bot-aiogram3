@@ -242,15 +242,15 @@ Reverse Proxy: Caddy перенаправляет внешние запросы 
 ```bash
   docker compose up -d --build
   ```
-Безопасность
-Automated HTTPS: Шифрование трафика "из коробки" без ручной настройки сертификатов.
-Persistent Data: Использование Docker Volumes для сохранения данных БД и конфигураций прокси при перезагрузке.
-SSH-Hardening: Рекомендуется вход на сервер только по SSH-ключам (OpenSSH ed25519) с отключением парольной аутентификации.
+### Безопасность
+- Automated HTTPS: Шифрование трафика "из коробки" без ручной настройки сертификатов.
+- Persistent Data: Использование Docker Volumes для сохранения данных БД и конфигураций прокси при перезагрузке.
+- SSH-Hardening: Рекомендуется вход на сервер только по SSH-ключам (OpenSSH ed25519) с отключением парольной аутентификации.
 ---
 Дополнительные технологии в стеке:
-Caddy (Web Server & HTTPS)
-FastAPI (WebApp Backend)
-Uvicorn (ASGI Server)
+- Caddy (Web Server & HTTPS)
+- FastAPI (WebApp Backend)
+- Uvicorn (ASGI Server)
 ---
 
 
