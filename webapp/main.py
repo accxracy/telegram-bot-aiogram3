@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import logging
 from app.data.task_manage import get_random_task_from_db, get_task_by_id, get_or_create_ai_solution
 from app.data import connection
+from app.metrics import DB_QUERY_TIME, TASK_GENERATED, REQUEST_ERRORS
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,25 +42,30 @@ async def index(request: Request):
 
 @app.get("/api/get_task")
 async def get_task(tg_id: int, subject):
-    task = await get_random_task_from_db(tg_id, subject)
+    with DB_QUERY_TIME.time():
+        task = await get_random_task_from_db(tg_id, subject)
+        TASK_GENERATED.inc()
+        if not task:
+            REQUEST_ERRORS.inc()
+            return {"success": False, "error": f"Задачи по {subject} закончились!"}
 
-    if not task:
-        return {"success": False, "error": f"Задачи по {subject} закончились!"}
-
-    return {
-        "success": True,
-        "task_id": task['id'],
-        "task_number": task['task_num'],
-        "task_text": task['condition']
-    }
+        return {
+            "success": True,
+            "task_id": task['id'],
+            "task_number": task['task_num'],
+            "task_text": task['condition']
+        }
 
 
 @app.post("/api/check_answer")
 async def check_answer(data: AnswerCheck):
-    task = await get_task_by_id(data.task_id)
+    with DB_QUERY_TIME.time():
+        task = await get_task_by_id(data.task_id)
 
 
     if not task:
+        logging.warning(f"Task check attempted for non-existent id: {data.task_id}")
+        REQUEST_ERRORS.inc()
         return {"success": False, "error": "Задача не найдена"}
 
 
@@ -69,10 +75,11 @@ async def check_answer(data: AnswerCheck):
 
     is_correct = (correct_answer == user_answer_clean)
 
-    await connection.update_user_task_stat(data.tg_id, data.username, is_correct)
+    with DB_QUERY_TIME.time():
+        await connection.update_user_task_stat(data.tg_id, data.username, is_correct)
 
-    if is_correct:
-        await connection.user_solved_task(data.tg_id, data.task_id)
+        if is_correct:
+            await connection.user_solved_task(data.tg_id, data.task_id)
 
 
     return {
@@ -85,25 +92,26 @@ async def check_answer(data: AnswerCheck):
 
 @app.get("/api/get_ai_explanation")
 async def get_ai_explanation(tg_id: int, task_id: int):
-    task = await get_task_by_id(task_id)
-    if not task:
-        return {"success": False, "error": "Задача не найдена"}
+    with DB_QUERY_TIME.time():
+        task = await get_task_by_id(task_id)
+        if not task:
+            return {"success": False, "error": "Задача не найдена"}
 
-    try:
-        explanation = await get_or_create_ai_solution(
-            task_id, task['condition'], task['solution'], tg_id
-        )
-        return {"success": True, "explanation": explanation}
+        try:
+            explanation = await get_or_create_ai_solution(
+                task_id, task['condition'], task['solution'], tg_id
+            )
+            return {"success": True, "explanation": explanation}
 
-    except Exception as ex:
-        logging.error(f"Neuro: {ex}")
+        except Exception as ex:
+            logging.error(f"Neuro: {ex}")
 
-        fallback_text = (
-            f"⚠️Нейросеть сейчас недоступна. Вывожу стандартное решение из базы:\n\n"
-            f"📝 Условие:\n{task['condition']}\n\n"
-            f"📖 Официальное решение:\n{task['solution']}\n\n"
-            f"🎯 Ответ: {task['answer']}"
-        )
+            fallback_text = (
+                f"⚠️Нейросеть сейчас недоступна. Вывожу стандартное решение из базы:\n\n"
+                f"📝 Условие:\n{task['condition']}\n\n"
+                f"📖 Официальное решение:\n{task['solution']}\n\n"
+                f"🎯 Ответ: {task['answer']}"
+            )
 
 
-        return {"success": True, "explanation": fallback_text}
+            return {"success": True, "explanation": fallback_text}
