@@ -223,6 +223,9 @@ GEMINI_API_KEY=your_gemini_api_key
 ### Мониторинг в Grafana
 <img src="images/grafana_metrics.jpg" width="900">
 
+### WEBAPP
+<img src="images/webapp.png" width="900">
+
 ---
 🛠 Как поднять этого бота на сервере
 1. Подготовка.
