@@ -1,3 +1,0 @@
-mytelegrambotwebapp.ru {
- reverse_proxy webapp:5000
-}
