@@ -130,6 +130,15 @@
 
    <script>
   const tg = window.Telegram.WebApp;
+  if (!tg.initData) {
+  document.body.innerHTML = `
+   <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; font-family: sans-serif; padding: 20px;">
+    <h2 style="color: #ff3b30; margin-bottom: 10px;">Доступ запрещен</h2>
+    <p style="color: #666; font-size: 16px;">Этот тренажер работает только внутри Telegram.</p>
+   </div>
+  `;
+  throw new Error("WebApp is opened outside of Telegram");
+ }
   tg.expand();
 
   const user = tg.initDataUnsafe?.user;
