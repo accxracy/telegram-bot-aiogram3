@@ -114,7 +114,7 @@
 - **Python 3.12**
 - **aiogram 3.x** (Асинхронный фреймворк, FSM, Routers)
 - **PostgreSQL** (Основная БД) + **Redis** (Кэширование)
-- **Docker / Docker Compose** (Контейнеризация, IaC и оркестрация)
+- **Docker / Docker Compose** (Контейнеризация)
 - **Prometheus & Grafana** (Сбор метрик и дашборды)
 - **Google GenAI SDK (Gemini 2.0 Flash)** (LLM и Vision)
 - **FastAPI** + **Uvicorn** (Для WebApp)
